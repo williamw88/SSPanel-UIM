@@ -69,7 +69,7 @@ EOL;
     /**
      * @throws TelegramSDKException
      */
-    public function setTelegram(): void
+    public function s(): void
     {
         $WebhookUrl = $_ENV['baseUrl'] . '/callback/telegram?token=' . Config::obtain('telegram_request_token');
         $telegram = new Api(Config::obtain('telegram_token'));

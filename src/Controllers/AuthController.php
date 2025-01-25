@@ -35,6 +35,7 @@ use function strtolower;
 use function time;
 use function trim;
 
+
 final class AuthController extends BaseController
 {
     /**
@@ -147,7 +148,7 @@ final class AuthController extends BaseController
             $email = strtolower(trim($this->antiXss->xss_clean($request->getParam('email'))));
 
             if ($email === '') {
-                return ResponseHelper::error($response, '未填写邮箱');
+                return ResponseHelper::error($response, '未填写邮箱1');
             }
 
             // check email format
@@ -156,22 +157,63 @@ final class AuthController extends BaseController
             if (! $email_check) {
                 return ResponseHelper::error($response, '无效的邮箱');
             }
+            try { 
 
-            if (! (new RateLimit())->checkRateLimit('email_request_ip', $request->getServerParam('REMOTE_ADDR')) ||
-                ! (new RateLimit())->checkRateLimit('email_request_address', $email)
-            ) {
-                return ResponseHelper::error($response, '你的请求过于频繁，请稍后再试');
+			// Extract the client IP
+			$clientIp = $request->getHeaderLine('X-Forwarded-For') ?: 
+			            $request->getServerParam('REMOTE_ADDR');
+			            
+			//return ResponseHelper::error($response, '注册:' . $clientIp);
+			
+			if (!$clientIp) {
+				
+			    return ResponseHelper::error($response, '无法获取客户端IP地址');
+			}
+			
+			// Use the extracted IP for rate limiting checks
+			if (!(new RateLimit())->checkRateLimit('email_request_ip', $clientIp) ||
+			    !(new RateLimit())->checkRateLimit('email_request_address', $email)
+			) {
+			    return ResponseHelper::error($response, '你的请求过于频繁，请稍后再试');
+			}
+                
+                $user = (new User())->where('email', $email)->first();
+
+                if ($user !== null) {
+                    return ResponseHelper::error($response, '此邮箱已经注册');
+                }
+            } catch (Exception | ClientExceptionInterface $e) {
+                return ResponseHelper::error($response, '错误: ' . $e->getMessage());
+                }
+
+                // $email_code = Tools::genRandomChar(6);
+                // $redis = (new Cache())->initRedis();
+                // $redis->setex('email_verify:' . $email_code, Config::obtain('email_verify_code_ttl'), $email);
+
+            try {
+                // Generate the verification code
+                $email_code = Tools::genRandomChar(6);
+
+                // Initialize Redis connection
+                $redis = (new Cache())->initRedis();
+
+                if (!$redis) {
+                    throw new Exception('Redis initialization failed.');
+                }
+            
+                // Store the verification code in Redis
+                $result = $redis->setex('email_verify:' . $email_code, Config::obtain('email_verify_code_ttl'), $email);
+            
+                if (!$result) {
+                    throw new Exception('Failed to save verification code in Redis.');
+                }
+            
+            } catch (Exception $e) {
+                // Log the exception and return an error response
+                error_log('Redis Error: ' . $e->getMessage());
+                return ResponseHelper::error($response, '系统错误: 无法存储验证码，请稍后再试。');
             }
-
-            $user = (new User())->where('email', $email)->first();
-
-            if ($user !== null) {
-                return ResponseHelper::error($response, '此邮箱已经注册');
-            }
-
-            $email_code = Tools::genRandomChar(6);
-            $redis = (new Cache())->initRedis();
-            $redis->setex('email_verify:' . $email_code, Config::obtain('email_verify_code_ttl'), $email);
+                
 
             try {
                 Mail::send(

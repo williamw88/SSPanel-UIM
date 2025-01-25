@@ -100,9 +100,10 @@ final class Clash extends Base
                         $node_custom_config['host'] ?? '';
                     $allow_insecure = $node_custom_config['allow_insecure'] ?? false;
                     $tls = $security === 'tls';
+                    $ws_path = $node_custom_config['StreamSettings']['wsSettings']['path'] ?? '/api/v1/live-data/feed';
                     // Clash 特定配置
                     $udp = $node_custom_config['udp'] ?? true;
-                    $ws_opts = $node_custom_config['ws-opts'] ?? $node_custom_config['ws_opts'] ?? null;
+                    //$ws_opts = $node_custom_config['ws-opts'] ?? $node_custom_config['ws_opts'] ?? null;
                     $h2_opts = $node_custom_config['h2-opts'] ?? $node_custom_config['h2_opts'] ?? null;
                     $http_opts = $node_custom_config['http-opts'] ?? $node_custom_config['http_opts'] ?? null;
                     $grpc_opts = $node_custom_config['grpc-opts'] ?? $node_custom_config['grpc_opts'] ?? null;
@@ -124,7 +125,9 @@ final class Clash extends Base
                         'skip-cert-verify' => (bool) $allow_insecure,
                         'servername' => $host,
                         'network' => $network,
-                        'ws-opts' => $ws_opts,
+                        'ws-opts' => [
+                            'path' => $ws_path
+                        ],
                         'h2-opts' => $h2_opts,
                         'http-opts' => $http_opts,
                         'grpc-opts' => $grpc_opts,
