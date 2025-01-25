@@ -1,5 +1,3 @@
-<img src="public/images/uim-logo-round_192x192.png" alt="logo" width="150" height="150" align="left" />
-
 <h1>SSPanel UIM</h1>
 
 > Across the Great Wall we can reach every corner in the world
