@@ -1,6 +1,4 @@
-<h1>SSPanel UIM</h1>
-
-> Across the Great Wall we can reach every corner in the world
+<h1>Customized SSPanel UIM</h1>
 
 <br>
 <br>
